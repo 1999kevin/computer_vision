@@ -1,9 +1,5 @@
-// #include <opencv2/opencv.hpp>
 #include <iostream>
 #include "helper.h"
-
-// using namespace std;
-// using namespace cv;
 
 const char *path = "C:/Users/a/Desktop/courses/computer_vision/cv_hw1/test1.avi";//文件保存路径 
 extern VideoWriter writer;
@@ -16,9 +12,11 @@ void drawFirstFrame()
     String number = "Student ID: 12021232";
 
     putText(image, number, Point(W / 3, H/3), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 0, 0));
-    putText(image, name, Point(W/3, H/3*2), FONT_HERSHEY_COMPLEX, 1, Scalar(0, 0, 255));
+    putText(image, name, Point(W/3, H/2), FONT_HERSHEY_COMPLEX, 1, Scalar(0, 0, 255));
 
-    drawSubPhoto("zheda(1).jpg", 128, 64);
+    addSubPhoto("zheda(1).jpg", 128, 64);
+    addCurrentTime(W/3, H/3*2);
+    putPicture(writer, image);
 }
 
 

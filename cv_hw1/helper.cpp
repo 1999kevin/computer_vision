@@ -1,6 +1,7 @@
 #include "helper.h"
 #include <math.h>
-// #include <opencv2/opencv.hpp>
+#include "time.h"
+
 
 const char *wndname = "myCartoon"; 
 VideoWriter writer;
@@ -46,7 +47,19 @@ void drawBackground(Mat img, bool flag)
     }
 }
 
-void drawSubPhoto(const char *path, int loc_w, int loc_h)
+void addCurrentTime(int loc_w, int loc_h)
+{
+    struct tm t;
+    time_t now; 
+    time(&now);
+    localtime_s(&t, &now);
+    String s = to_string(t.tm_year+1900)+'.'+to_string(t.tm_mon+1)+'.'+to_string(t.tm_mday)
+                +' '+to_string(t.tm_hour)+'h'+to_string(t.tm_min)+'m'+to_string(t.tm_sec)+'s';
+    putText(image, s, Point(loc_w, loc_h), FONT_HERSHEY_COMPLEX, 1, Scalar(0, 255, 0));
+}
+
+
+void addSubPhoto(const char *path, int loc_w, int loc_h)
 {
     Mat roi = imread(path, IMREAD_COLOR);
     Rect roi_rect = Rect(loc_w, loc_h, roi.cols, roi.rows);
