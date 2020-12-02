@@ -1,48 +1,14 @@
-#include <opencv2/opencv.hpp>
+// #include <opencv2/opencv.hpp>
 #include <iostream>
+#include "helper.h"
 
-using namespace std;
-using namespace cv;
+// using namespace std;
+// using namespace cv;
 
-#define W 1080
-#define H 720
+const char *path = "C:/Users/a/Desktop/courses/computer_vision/cv_hw1/test1.avi";//文件保存路径 
+extern VideoWriter writer;
+extern Mat image;
 
-const char *path = "C:/Users/a/Desktop/courses/computer_vision/cv_hw1/test1.avi";//输入文件路径 
-Mat image;
-VideoWriter writer;
-const char *wndname = "test"; 
-
-/* 写入一帧, 显示一帧并停顿33ms，若按下空格键则暂停视频，再按一次继续 */
-void putPicture(Mat img)
-{   
-    writer.write(Mat(img));
-    imshow(wndname, img);
-    if(waitKey(33) == 32){
-        while(1){
-            if(waitKey(33) == 32){
-                break;
-            }
-        }
-    }
-    // printf("%d\n",);
-}
-
-/* 延迟k帧 */
-void delay(int k)
-{
-    for (int i = 0; i <= k; i++)
-    {
-        putPicture(image);
-    }
-}
-
-
-void drawSubPhoto(const char *path, int loc_w, int loc_h)
-{
-    Mat roi = imread(path, IMREAD_COLOR);
-    Rect roi_rect = Rect(loc_w, loc_h, roi.cols, roi.rows);
-    roi.copyTo(image(roi_rect));
-}
 
 void drawFirstFrame()
 {
@@ -56,73 +22,10 @@ void drawFirstFrame()
 }
 
 
-
-/* 清空图片，true则写入一帧，false不写入 */
-void drawBackground(bool flag)
-{
-    rectangle(image,
-        Point(0, 0),
-        Point(W, H),
-        Scalar(255, 255, 255),
-        -1,
-        8);
-    if (flag == true)
-    {
-        putPicture(image);
-    }
-}
-
-void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate)
-{
-    int x1, y1,step;
-    Point center=start;
-    x1 = start.x;
-    y1 = start.y;
-    double footx,footy;
-    int dx = end.x - start.x;
-    int dy = end.y - start.y;
-    circle(mat, center,thick,color,-1, 8, 0);
-    putPicture(mat);
-    if (abs(dx) > abs(dy))
-    {
-        step = abs(dx);
-    }
-    else 
-    {
-        step = abs(dy);
-    }
-    footx = (double)dx / step;
-    footy = (double)dy / step;
-    //printf("footy = %f\n", footy);
-    for (int i = 0; i<step; i++)
-    {
-        if (footx > 0) {
-            x1 += int(footx + 0.5);
-        }
-        if (footx < 0)
-        {
-            x1 += int(footx - 0.5);
-        }
-        if (footy > 0)
-        {
-            y1 += int(footy + 0.5);
-        }
-        if (footy < 0)
-        {
-            y1 += int(footy - 0.5);
-        }
-        center.x = x1;
-        center.y = y1;
-        circle(mat, center,thick,color,-1, 8, 0);
-        if(i % rate == 0){
-            putPicture(mat);
-        }
-            
-    }
-}
-
 void drawCartoon(){
-    drawLine(image, Point(0,0), Point(512,512), Scalar(255, 0, 0), 1, 5);
+    drawLine(image, Point(0,0), Point(512,670), Scalar(255, 0, 0), 1, 10);
+    drawArc(image, Point(512, 512), 50, 0, PI, Scalar(255, 0, 0), 2, 5);
+    drawEarc(image, Point(256, 512), 100, 0, PI, 20, 10, Scalar(255, 0, 0), 1, false, 3);
 }
 
 
@@ -131,11 +34,11 @@ int main()
     printf("making up video\n");
     writer = VideoWriter(path, 0, 30, Size(W, H));
     image= Mat::zeros(H, W, CV_8UC3);
-    drawBackground(false);
-    delay(30);
+    drawBackground(image, false);
+    // delay(30);
     drawFirstFrame();
     delay(30);
-    drawBackground(false);
+    drawBackground(image, false);
     drawCartoon();
     return 0;
 }
