@@ -10,11 +10,21 @@ using namespace cv;
 const char *path = "C:/Users/a/Desktop/courses/computer_vision/cv_hw1/test1.avi";//输入文件路径 
 Mat image;
 VideoWriter writer;
+const char *wndname = "test"; 
 
-/* 写入一帧 */
+/* 写入一帧, 显示一帧并停顿33ms，若按下空格键则暂停视频，再按一次继续 */
 void putPicture(Mat img)
-{
+{   
     writer.write(Mat(img));
+    imshow(wndname, img);
+    if(waitKey(33) == 32){
+        while(1){
+            if(waitKey(33) == 32){
+                break;
+            }
+        }
+    }
+    // printf("%d\n",);
 }
 
 /* 延迟k帧 */
