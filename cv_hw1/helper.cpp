@@ -66,8 +66,9 @@ void addSubPhoto(const char *path, int loc_w, int loc_h)
     roi.copyTo(image(roi_rect));
 }
 
-void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate)
+void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate, bool Draw)
 {
+    // printf("end: %d %d\n", end.x,end.y);
     int x1, y1,step;
     Point center=start;
     x1 = start.x;
@@ -76,7 +77,8 @@ void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate)
     int dx = end.x - start.x;
     int dy = end.y - start.y;
     circle(mat, center, thick, color, -1, 8, 0);
-    putPicture(writer, mat);
+    if(Draw)
+        putPicture(writer, mat);
     if (abs(dx) > abs(dy))
     {
         step = abs(dx);
@@ -87,7 +89,7 @@ void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate)
     }
     footx = (double)dx / step;
     footy = (double)dy / step;
-    //printf("footy = %f\n", footy);
+    // printf("footy = %f\n", footy);
     for (int i = 0; i<step; i++)
     {
         if (footx > 0) {
@@ -107,15 +109,16 @@ void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate)
         }
         center.x = x1;
         center.y = y1;
+        // printf("center: %d %d\n",center.x, center.y);
         circle(mat, center, thick, color, -1, 8, 0);
-        if(i % rate == 0){
+        if(i % rate == 0 && Draw){
             putPicture(writer, mat);
         }
             
     }
 }
 
-void drawArc(Mat img, Point center, double radius, double start_angle, double end_angle, Scalar color,int thick, int rate)
+void drawArc(Mat img, Point center, double radius, double start_angle, double end_angle, Scalar color,int thick, int rate, bool Draw)
 {
     Point arc;
     double foot = 0.02;
@@ -125,7 +128,7 @@ void drawArc(Mat img, Point center, double radius, double start_angle, double en
         arc.y = int(center.y + radius*sin(r));
 
         circle(img, arc, thick, color, -1, 8, 0);
-        if(int(r/PI*180) % rate == 0){
+        if(int(r/PI*180) % rate == 0 && Draw){
             putPicture(writer, img);
         }
             

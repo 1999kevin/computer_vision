@@ -16,8 +16,8 @@ void delay(int k);
 void drawBackground(Mat img, bool flag);
 void addSubPhoto(const char *path, int loc_w, int loc_h);
 void addCurrentTime(int loc_w, int loc_h);
-void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate);
-void drawArc(Mat img, Point center, double radius, double start_angle, double end_angle, Scalar color,int thick, int rate);
+void drawLine(Mat mat, Point start, Point end,Scalar color,int thick, int rate, bool Draw);
+void drawArc(Mat img, Point center, double radius, double start_angle, double end_angle, Scalar color,int thick, int rate, bool Draw);
 void drawEarc(Mat img, Point center, double radius, double start_angle, double end_angle, float a,float b,Scalar color,int thick,bool is_x, int rate);
 
 
