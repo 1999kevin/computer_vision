@@ -8,16 +8,31 @@ extern const char *wndname;
 
 void drawFirstFrame()
 {
-    String name = "name    :   Liuke";
+    String name = "name     :    Liuke";
     String number = "Student ID: 12021232";
 
     putText(image, number, Point(W / 3, H/3), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 0, 0));
     putText(image, name, Point(W/3, H/2), FONT_HERSHEY_COMPLEX, 1, Scalar(0, 0, 255));
 
     addSubPhoto("zheda(1).jpg", 128, 64);
+    addSubPhoto("me(1).png", W/2-53, H/3*2+20);
     addCurrentTime(W/3, H/3*2);
     putPicture(writer, image);
 }
+
+void drawZJUPhoto(){
+    image = imread("yq(1).png", IMREAD_COLOR);
+    // putPicture(writer, image);
+    delay(40);
+    image = imread("zjui(1).png", IMREAD_COLOR);
+    // putPicture(writer, image);
+    delay(40);
+    image = imread("zjg(1).png", IMREAD_COLOR);
+    // putPicture(writer, image);
+    delay(40);
+}
+
+
 
 
 void drawTank(){
@@ -99,14 +114,14 @@ void drawCartoon(){
 
 void drawEnding(){
     // drawBackground(image, false);
-    Size textsize = getTextSize("OpenCV forever!", FONT_HERSHEY_COMPLEX, 3, 5, 0);
+    Size textsize = getTextSize("I love OpenCV!", FONT_HERSHEY_COMPLEX, 3, 5, 0);
     Point org((W - textsize.width)/2, (H - textsize.height)/2);
 
     Mat image2;
     for(int i = 0; i < 255; i += 2)
     {
         image2 = image - Scalar::all(i);
-        putText(image2, "OpenCV forever!", org, FONT_HERSHEY_COMPLEX, 3, Scalar(i, i, 255));
+        putText(image2, "I love OpenCV!", org, FONT_HERSHEY_COMPLEX, 3, Scalar(i, i, 255));
         putPicture(writer, image2);
     }
 }
@@ -118,10 +133,12 @@ int main()
     image= Mat::zeros(H, W, CV_8UC3);
     drawBackground(image, false);
     drawFirstFrame();
-    delay(30);
+    delay(60);
+    drawZJUPhoto();
     drawBackground(image, false);
     drawCartoon();
-    draswEnding();
+    drawBackground(image, false);
+    drawEnding();
 
     return 0;
 }
