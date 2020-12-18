@@ -1,14 +1,14 @@
 #include <iostream>
 #include "helper.h"
 
-const char *path = "C:/Users/a/Desktop/courses/computer_vision/cv_hw1/test1.avi";//文件保存路径 
+const char *path = "test1.avi";//文件保存路径 
 extern VideoWriter writer;
 extern Mat image;
 extern const char *wndname;
 
 void drawFirstFrame()
 {
-    String name = "name     :    Liuke";
+    String name = "name     :    Ke Liu";
     String number = "Student ID: 12021232";
 
     putText(image, number, Point(W / 3, H/3), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 0, 0));
