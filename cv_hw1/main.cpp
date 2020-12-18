@@ -1,3 +1,11 @@
+/** 
+ * @author 刘柯
+ * @date 2020/11/28
+ * @description: cv第一次作业
+ * @function: 画卡通画
+*/
+
+
 #include <iostream>
 #include "helper.h"
 
