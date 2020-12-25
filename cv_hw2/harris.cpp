@@ -45,11 +45,25 @@ cv::Mat Harris::calIx(cv::Mat image){
      *  2  1  0  -1  -2
      *  2  1  0  -1  -2
     */  
-   int y_filter[] = { 1,1,2,1,1 };
-   int x_filter[] = { 2,1,0,-1,-2};
+ 
+//    int y_filter[] = { 1,1,2,1,1 };
+//    int x_filter[] = { 2,1,0,-1,-2};
 
-   cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(5,1,CV_32S,y_filter)); 
-   Ix = convolve<int32_t,int32_t>(tmp,cv::Mat(1,5,CV_32S,x_filter));
+//    cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(5,1,CV_32S,y_filter)); 
+//    Ix = convolve<int32_t,int32_t>(tmp,cv::Mat(1,5,CV_32S,x_filter));
+
+    /**
+     * 卷积算子（这个算子可以调整）
+     *  -1 0 1
+     *  -2 0 2
+     *  -1 0 1
+    */ 
+   int y_filter[] = { 1,2,1};
+   int x_filter[] = { -1,0,1};
+
+   cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(3,1,CV_32S,y_filter)); 
+   Ix = convolve<int32_t,int32_t>(tmp,cv::Mat(1,3,CV_32S,x_filter));
+
    absMat<int32_t>(Ix);
 
    return Ix;
@@ -60,19 +74,35 @@ cv::Mat Harris::calIx(cv::Mat image){
 cv::Mat Harris::calIy(cv::Mat image)
 {
     cv::Mat Iy(image_h,image_w,CV_32S,cv::Scalar::all(0));
+//     /**
+//      * 卷积算子
+//      *  2  2  4  2  2
+//      *  1  1  2  1  1
+//      *  0  0  0  0  0
+//      * -1 -1 -2 -1 -1
+//      * -2 -2 -4 -2 -2
+//     */ 
+//    int y_filter[] = {2,1,0,-1,-2};
+//    int x_filter[] = {1,1,2,1,1};
+
+//    cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(5,1,CV_32S,y_filter)); 
+//    Iy = convolve<int32_t,int32_t>(tmp,cv::Mat(1,5,CV_32S,x_filter));
+
     /**
      * 卷积算子
-     *  2  2  4  2  2
-     *  1  1  2  1  1
-     *  0  0  0  0  0
-     * -1 -1 -2 -1 -1
-     * -2 -2 -4 -2 -2
+     *  1 2 1
+     *  0 0 0 
+     *  -1 -2 -1
     */ 
-   int y_filter[] = {2,1,0,-1,-2};
-   int x_filter[] = {1,1,2,1,1};
+   int y_filter[] = {1,0,-1};
+   int x_filter[] = {1,2,1};
 
-   cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(5,1,CV_32S,y_filter)); 
-   Iy = convolve<int32_t,int32_t>(tmp,cv::Mat(1,5,CV_32S,x_filter));
+   cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(3,1,CV_32S,y_filter)); 
+   Iy = convolve<int32_t,int32_t>(tmp,cv::Mat(1,3,CV_32S,x_filter));
+
+
+
+
    absMat<int32_t>(Iy);
 
    return Iy;
@@ -128,20 +158,38 @@ void Harris::absMat(cv::Mat& mat)
 
 
 
-//使用线性矩阵进行window(x,y)进行卷积
+// //使用线性矩阵进行window(x,y)进行卷积
+// void Harris::meanFilter(cv::Mat& image)
+// {
+//     const int WSIZE = 5;
+//     float window[WSIZE][WSIZE] ={
+//         { 2, 4, 5,  4,  2 },
+//         { 4, 9, 12, 9,  4 },
+//         { 5, 12,15, 12, 5 },
+//         { 4, 9, 12, 9,  4 },
+//         { 2, 4, 5,  4,  2 }
+//     };
+
+//     cv::Mat filter(WSIZE,WSIZE,CV_32F,window);
+//     filter = filter/159;
+
+//     image = convolve<int32_t,float>(image,filter);
+// }
+
+//使用高斯滤波进行window(x,y)进行卷积
 void Harris::meanFilter(cv::Mat& image)
 {
     const int WSIZE = 5;
     float window[WSIZE][WSIZE] ={
-        { 2, 4, 5,  4,  2 },
-        { 4, 9, 12, 9,  4 },
-        { 5, 12,15, 12, 5 },
-        { 4, 9, 12, 9,  4 },
-        { 2, 4, 5,  4,  2 }
+        { 1, 1, 2, 1, 1 },
+        { 1, 2, 4, 2, 1 },
+        { 2, 4, 8, 4, 2 },
+        { 1, 2, 4, 2, 1 },
+        { 1, 1, 2, 1, 1 }
     };
 
     cv::Mat filter(WSIZE,WSIZE,CV_32F,window);
-    filter = filter/159;
+    filter = filter/52;
 
     image = convolve<int32_t,float>(image,filter);
 }
@@ -237,10 +285,9 @@ cv::Mat Harris::getR()
 vector<cv::Point> Harris::getCorners(int threshold)
 {
     const double MIN_THRES = 100; //最小阈值
-    //默认取最大值的十分之一
     //默认为相对值, 对于纯色图则不适用, 所以设置100的最小阈值
     if(threshold == 0) {
-        threshold = max(0.05*max_r,MIN_THRES);
+        threshold = max(0.01*max_r,MIN_THRES);
     }
     const int MASK = 8;
     vector<cv::Point> points;
@@ -264,7 +311,7 @@ vector<cv::Point> Harris::getCorners(int threshold)
     }
 
     //检测的点过少, 则降低标准再检测一次
-    if(threshold>MIN_THRES && points.size()<20){
+    if(threshold>MIN_THRES && points.size()<50){
         points = getCorners(threshold*0.8);
     }
     return points;
