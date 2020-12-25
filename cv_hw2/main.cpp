@@ -9,34 +9,26 @@
 using namespace cv;
 using namespace std;
 
-void cut(Mat image){
-    Harris harris;
-    Mat min;
-    Mat max;
-    Mat R;
+void detect(Mat image){
+    Harris harrisCornerDetector;
+    harrisCornerDetector.update(image);
 
+    vector<Point> corners = harrisCornerDetector.getCorners();
     Mat result = image.clone();
-    harris.update(image);
-    // printf("one cut\n");
-    vector<Point> corners = harris.getCorners();
-    int size = corners.size();
-    for(int i=0;i<size;i++){
+    for(int i=0;i<corners.size();i++){
         int x = corners[i].x;
         int y = corners[i].y;
-        rectangle(result,cv::Point(x-4,y-4),cv::Point(x+4,y+4),cv::Scalar(0,255,0),2);
+        rectangle(result,Point(x-4,y-4),Point(x+4,y+4),Scalar(0,255,0),2);
     }
 
-    min = harris.getMin();
-    max = harris.getMax();
-    R   = harris.getR();
+    Mat min = harrisCornerDetector.getMin();
+    Mat max = harrisCornerDetector.getMax();
+    Mat R   = harrisCornerDetector.getR();
 
-    //保存图片
     imwrite("result.jpg",result);
     imwrite("min.jpg",min);
     imwrite("max.jpg",max);
     imwrite("R.jpg",R);
-
-    //展示中间结果
     imshow("result",result);
     imshow("min",min);
     imshow("max",max);
@@ -52,16 +44,16 @@ int main(int argc, char* argv[])
         return -1;
     }
     
-    Mat frame;
-    namedWindow("frame",1);
+    Mat video;
+    namedWindow("video",1);
 
     while(true){
-        cap>>frame;
-        imshow("frame",frame);
+        cap>>video;
+        imshow("video",video);
         char key = waitKey(30);    //延时30
         
         if(key == ' '){
-            cut(frame);
+            detect(video);
             char key2 = waitKey(30);   //这个延时后期可以删掉
             while(key2 != ' '){
                 key2 = waitKey(30);

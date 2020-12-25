@@ -43,8 +43,6 @@ private:
 
     void meanFilter(cv::Mat& image);
 
-
-
     void calR();
 
     template<typename IMGTYPE,typename FILTERTYPE>
@@ -53,12 +51,11 @@ public:
     Harris();
     ~Harris();
     void update(Mat image);
-
-    vector<cv::Point> getCorners(int threshold=0);
     void getEigenvalue();
     cv::Mat getR();
     cv::Mat getMax();
     cv::Mat getMin();
+    vector<cv::Point> getCorners(int threshold=0);
 
 };
 

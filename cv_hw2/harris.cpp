@@ -30,27 +30,29 @@ void Harris::update(cv::Mat image){
     meanFilter(Ixy);
 
     getEigenvalue(); //计算特征值
-    calR();                 //计算R
+    calR();          //计算R
 
 }
 
+// 计算Ix
+cv::Mat Harris::calIx(cv::Mat image){
+    cv::Mat Ix(image_h,image_w,CV_32S,cv::Scalar::all(0));
+    /**
+     * 卷积算子（这个算子可以调整）
+     *  2  1  0  -1  -2
+     *  2  1  0  -1  -2
+     *  4  2  0  -2  -4
+     *  2  1  0  -1  -2
+     *  2  1  0  -1  -2
+    */  
+   int y_filter[] = { 1,1,2,1,1 };
+   int x_filter[] = { 2,1,0,-1,-2};
 
-//使用线性矩阵进行window(x,y)进行卷积
-void Harris::meanFilter(cv::Mat& image)
-{
-    const int WSIZE = 5;
-    float window[WSIZE][WSIZE] ={
-        { 2, 4, 5,  4,  2 },
-        { 4, 9, 12, 9,  4 },
-        { 5, 12,15, 12, 5 },
-        { 4, 9, 12, 9,  4 },
-        { 2, 4, 5,  4,  2 }
-    };
+   cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(5,1,CV_32S,y_filter)); 
+   Ix = convolve<int32_t,int32_t>(tmp,cv::Mat(1,5,CV_32S,x_filter));
+   absMat<int32_t>(Ix);
 
-    cv::Mat filter(WSIZE,WSIZE,CV_32F,window);
-    filter = filter/159;
-
-    image = convolve<int32_t,float>(image,filter);
+   return Ix;
 }
 
 
@@ -76,40 +78,6 @@ cv::Mat Harris::calIy(cv::Mat image)
    return Iy;
 }
 
-cv::Mat Harris::calIx(cv::Mat image){
-    cv::Mat Ix(image_h,image_w,CV_32S,cv::Scalar::all(0));
-    /**
-     * 卷积算子（这个算子可以调整）
-     *  2  1  0  -1  -2
-     *  2  1  0  -1  -2
-     *  4  2  0  -2  -4
-     *  2  1  0  -1  -2
-     *  2  1  0  -1  -2
-    */  
-   int y_filter[] = { 1,1,2,1,1 };
-   int x_filter[] = { 2,1,0,-1,-2};
-
-    /**
-     * 为了提高计算速度
-     * 先在y方向做卷积,之后在x方向做卷积
-     */
-   cv::Mat tmp = convolve<uchar,int32_t>(image,cv::Mat(5,1,CV_32S,y_filter)); 
-   Ix = convolve<int32_t,int32_t>(tmp,cv::Mat(1,5,CV_32S,x_filter));
-
-//    int xy_filter[] = {2,1,0,-1,-2,
-//                       2,1,0,-1,-2,
-//                       4,2,0,-2,-4,
-//                       2,1,0,-1,-2,
-//                       2,1,0,-1,-2};
-//     Mat filter = Mat(5,5,CV_32S,xy_filter);
-//     cout<< "Ifilterx = " <<endl<<" "<<filter<<endl;
-//     Ix = convolve<int32_t,int32_t>(image,filter);
-   absMat<int32_t>(Ix);
-
-   return Ix;
-}
-
-
 //计算Ixy
 cv::Mat Harris::calIxy(cv::Mat Ix,cv::Mat Iy)
 {
@@ -121,62 +89,6 @@ cv::Mat Harris::calIxy(cv::Mat Ix,cv::Mat Iy)
         }
     }
     return Ixy;
-}
-
-
-
-/**
- * @param image 被卷积的矩阵,通道数需要为1
- * @param filter 卷积的算子, 长和宽需要是奇数
- * @return 卷积的结果, 大小和image保持一致
- * @description: 计算卷积
-*/
-template<typename IMGTYPE,typename FILTERTYPE>
-cv::Mat Harris::convolve(cv::Mat image,cv::Mat filter)
-{
-    const int filter_w = filter.cols;
-    const int filter_h = filter.rows;
-    // cout<<"convolve "<<filter_h<<":"<<filter_w<<endl;
-    const int half_filter_w = filter_w/2;
-    const int half_filter_h = filter_h/2;
-    // cout<<"half convolve "<<half_filter_h<<":"<<half_filter_w<<endl;
-    cv::Mat result(image_h,image_w,CV_32S,cv::Scalar::all(0));
-    // cout<<"f:"<<filter<<endl;
-    for(int y = 0; y < image_h; y++){
-        for(int x = 0; x < image_w; x++){
-            for(int j = -half_filter_h; j <= half_filter_h; j++){
-                for(int i = -half_filter_w; i <= half_filter_w; i++){
-                    //卷积的值越界(超出原图的范围,则该点用中心点代替)
-                    if(x+i<0 || x+i >= image_w || y+j < 0 || y+j >= image_h){
-                        result.at<int32_t>(y,x) +=  (filter.at<FILTERTYPE>(j+half_filter_h,i+half_filter_w))*\
-                                                image.at<IMGTYPE>(y,x);
-                    }else{
-                        result.at<int32_t>(y,x) += (filter.at<FILTERTYPE>(j+half_filter_h,i+half_filter_w))*\
-                                                image.at<IMGTYPE>(y+j,x+i);
-                    }
-                }
-            }
-        }
-    }
-    return result;
-}
-
-
-//取绝对值
-template<typename TYPE>
-void Harris::absMat(cv::Mat& mat)
-{
-    int w = mat.cols;
-    int h = mat.rows;
-
-    for(int y = 0; y < h; y++){
-        for(int x = 0; x < w; x++){
-            if(mat.at<TYPE>(y,x)<0) {
-                mat.at<TYPE>(y,x) *= -1;
-            }
-        }
-    }
-
 }
 
 
@@ -197,6 +109,78 @@ cv::Mat Harris::powMat(cv::Mat& mat,int n)
     return result;
 }
 
+//取绝对值
+template<typename TYPE>
+void Harris::absMat(cv::Mat& mat)
+{
+    int w = mat.cols;
+    int h = mat.rows;
+
+    for(int y = 0; y < h; y++){
+        for(int x = 0; x < w; x++){
+            if(mat.at<TYPE>(y,x)<0) {
+                mat.at<TYPE>(y,x) *= -1;
+            }
+        }
+    }
+
+}
+
+
+
+//使用线性矩阵进行window(x,y)进行卷积
+void Harris::meanFilter(cv::Mat& image)
+{
+    const int WSIZE = 5;
+    float window[WSIZE][WSIZE] ={
+        { 2, 4, 5,  4,  2 },
+        { 4, 9, 12, 9,  4 },
+        { 5, 12,15, 12, 5 },
+        { 4, 9, 12, 9,  4 },
+        { 2, 4, 5,  4,  2 }
+    };
+
+    cv::Mat filter(WSIZE,WSIZE,CV_32F,window);
+    filter = filter/159;
+
+    image = convolve<int32_t,float>(image,filter);
+}
+
+
+
+
+/**
+ * @param image 被卷积的矩阵,通道数需要为1
+ * @param filter 卷积的算子, 长和宽需要是奇数
+ * @return 卷积的结果, 大小和image保持一致
+ * @description: 计算卷积
+*/
+template<typename IMGTYPE,typename FILTERTYPE>
+cv::Mat Harris::convolve(cv::Mat image,cv::Mat filter)
+{
+    const int filter_w = filter.cols;
+    const int filter_h = filter.rows;
+    const int half_filter_w = filter_w/2;
+    const int half_filter_h = filter_h/2;
+    cv::Mat result(image_h,image_w,CV_32S,cv::Scalar::all(0));
+    for(int y = 0; y < image_h; y++){
+        for(int x = 0; x < image_w; x++){
+            for(int j = -half_filter_h; j <= half_filter_h; j++){
+                for(int i = -half_filter_w; i <= half_filter_w; i++){
+                    //卷积的值越界(超出原图的范围,则该点用中心点代替)
+                    if(x+i<0 || x+i >= image_w || y+j < 0 || y+j >= image_h){
+                        result.at<int32_t>(y,x) +=  (filter.at<FILTERTYPE>(j+half_filter_h,i+half_filter_w))*\
+                                                image.at<IMGTYPE>(y,x);
+                    }else{
+                        result.at<int32_t>(y,x) += (filter.at<FILTERTYPE>(j+half_filter_h,i+half_filter_w))*\
+                                                image.at<IMGTYPE>(y+j,x+i);
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
 
 /**
  * @description: 计算特征值中的最大值和最小值
@@ -326,6 +310,7 @@ cv::Mat Harris::getMax()
 
     return result;
 }
+
 
 //获取Min
 cv::Mat Harris::getMin()
