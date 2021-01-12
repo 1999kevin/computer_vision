@@ -20,6 +20,13 @@ def flip(image, rows, cols):
             new_image[i*cols+j] = image[j*cols+i]
     return new_image
 
+# 从labels[cur_index]找到下一个是num的index
+def nextIndex(num, cur_index):
+    index = cur_index+1
+    while labels[index] != num:
+        index+=1
+    return index
+
 # 打开一个空的新数据集
 fo = open("./data/MNIST/raw/new-train-images-idx3-ubyte", "wb")
 
@@ -51,7 +58,10 @@ new_images = images.copy()
 new_images[0][:] = combine(images[0], images[1], rows, cols)[:]
 new_images[4][:] = flip(images[4], rows, cols)[:]
 
-
+num0, num1 = 0,-1  # 前者是label和主要数，后者是背景数
+index0, index1 = nextIndex(num0,-1),nextIndex(num1,-1)
+inde = nextIndex(num0, index0)
+inde2= nextIndex(num0, inde)
 
 # 写入新数据集
 for i in range(size):
