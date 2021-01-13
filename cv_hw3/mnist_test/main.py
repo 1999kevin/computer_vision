@@ -3,6 +3,12 @@ import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
+import os
+import numpy as np
+from array import array
+from torch.utils.data import Dataset
+# from torch.utils.data import DataLoader
+
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -11,15 +17,69 @@ num_classes = 10
 batch_size = 100
 learning_rate = 0.001
 
-# MNIST dataset
-train_dataset = torchvision.datasets.MNIST(root='data2/',
-                                           train=True,
-                                           transform=transforms.ToTensor(),
-                                           download=False)
 
-test_dataset = torchvision.datasets.MNIST(root='data2/',
-                                          train=False,
-                                          transform=transforms.ToTensor())
+class Mnist(Dataset):
+    def __init__(self, root, train=True, transform=None):
+
+        # 根据是否为训练集，得到文件名前缀
+        self.file_pre = 'train' if train == True else 't10k'
+        self.transform = transform
+
+        # 生成对应数据集的图片和标签文件路径
+        self.label_path = os.path.join(root,
+                                       '%s-labels-idx1-ubyte' % self.file_pre)
+        self.image_path = os.path.join(root,
+                                       '%s-images-idx3-ubyte' % self.file_pre)
+
+        # 读取文件数据，返回图片和标签
+        self.images, self.labels = self.__read_data__(
+            self.image_path,
+            self.label_path,
+            train)
+
+    def __read_data__(self, image_path, label_path, train):
+        # 数据集读取
+        with open(label_path, 'rb') as lbpath:
+            labels = np.frombuffer(lbpath.read(), np.uint8,
+                                   offset=8)
+        count = 60000 if train == True else 10000
+
+        with open(image_path, "rb") as imgpath:
+            image_data = array("B", imgpath.read())
+            images = []
+            for i in range(count):
+                images.append([0] * 28 * 28)
+            for i in range(count):
+                images[i][:] = image_data[i * 28 * 28:(i + 1) * 28 * 28]
+        images = np.array(images, dtype=np.float32).reshape(count, 28, 28)
+        images /= 255
+        '''
+        with open(image_path, 'rb') as imgpath:
+            images = np.frombuffer(imgpath.read(), np.uint8,
+                                   offset=16).reshape(len(labels), 28, 28)
+        '''
+        return images, labels
+
+    def __getitem__(self, index):
+        image, label = self.images[index], int(self.labels[index])
+
+        # 如果需要转成 tensor 则使用 tansform
+        if self.transform is not None:
+            image = self.transform(np.array(image))  # 此处需要用 np.array(image)
+        return image, label
+
+    def __len__(self):
+        return len(self.labels)
+
+
+# MNIST dataset
+train_dataset = Mnist(root='data2/MNIST/raw',
+                      train=True,
+                      transform=transforms.ToTensor())
+
+test_dataset = Mnist(root='data2/MNIST/raw',
+                     train=False,
+                     transform=transforms.ToTensor())
 
 # Data loader
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
