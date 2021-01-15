@@ -18,19 +18,27 @@ parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 parser.add_argument('--test', '-t', action='store_true',
                     help='test with checkpoint')
+parser.add_argument('--net', '-n', default='lenet5',type=str,
+                    help='choose network, choose from mobileNetV2, resnet18, lenet5')
+parser.add_argument('--epoch', '-e', default=10,type=int,
+                    help='how many epoch will train')
+
 args = parser.parse_args()
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
-training_epoch = 230
-loading_path = './checkpoint/resnet18-ckpt.pth'
-saving_path = './checkpoint/resnet18-ckpt.pth'
-net_name = 'ResNet18'
+if not args.test:
+    training_epoch = args.epoch
+else:
+    training_epoch = 0
 
-print("total training epochs in this script:", training_epoch)
-print("saving path: ", saving_path)
+net_name = args.net
+loading_path = './checkpoint/'+net_name+'-ckpt.pth'
+saving_path = './checkpoint/'+net_name+'-ckpt.pth'
+
+
 
 
 # get data from Cifar.py
@@ -43,25 +51,25 @@ testloader = cifar_test_batch
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
-print("net: ", net_name)
+
 # Model
 print('==> Building model..')
-# net = VGG('VGG19')
-net = ResNet18(11)
-# net = PreActResNet18()
-# net = GoogLeNet()
-# net = DenseNet121()
-# net = ResNeXt29_2x64d()
-# net = MobileNet()
-# net = MobileNetV2(11)
-# net = DPN92()
-# net = ShuffleNetG2()
-# net = SENet18()
-# net = ShuffleNetV2(1)
-# net = EfficientNetB0()
-# net = RegNetX_200MF()
-# net = SimpleDLA()
-# net = lenet5()
+print("net: ", net_name)
+
+if net_name == 'mobileNetV2':
+    net = MobileNetV2(11)
+elif net_name == 'resnet18':
+    net = ResNet18(11)
+elif net_name == 'lenet5':
+    net = lenet5()
+else:
+    print("error network name")
+    exit(1)
+
+
+print("total training epochs in this script:", training_epoch)
+print("saving path: ", saving_path)
+
 if device.type == 'cuda':
     net = net.to(device) #将网络部署到GPU上
 
@@ -108,7 +116,7 @@ def train(epoch):
         # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
         #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
     # print('Loss:',train_loss/(batch_idx+1),' Acc: ', 100.*correct/total, correct, '/', total)
-    print('Loss: %f, Acc: %f%% = %d / %d' %(train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+    print('Training loss: %f, Acc: %f%% = %d / %d' %(train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
 
 
@@ -129,10 +137,7 @@ def test(epoch):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-        # print('Loss:', test_loss / (batch_idx + 1), ' Acc: ', 100. * correct / total, correct, '/', total)
-        print('Loss: %f, Acc: %f%% = %d / %d' % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-            # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        print('Testing loss: %f, Acc: %f%% = %d / %d' % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
 
     # Save checkpoint.
     acc = 100.*correct/total
