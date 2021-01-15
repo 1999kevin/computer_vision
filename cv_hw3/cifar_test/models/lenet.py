@@ -25,7 +25,7 @@ class lenet5(nn.Module):
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(84, 10)
+            nn.Linear(84, 11)
         )
 
     def forward(self, x):

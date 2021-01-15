@@ -90,7 +90,7 @@ def load_cifar_10_data(data_dir, negatives=False):
 
 """show it works"""
 
-cifar_10_dir = 'D:\MNIST\cifar-10-batches-py'
+cifar_10_dir = './data/cifar-10-batches-py'
 
 train_data, train_filenames, train_labels, test_data, test_filenames, test_labels, label_names = load_cifar_10_data(cifar_10_dir)
 
@@ -104,12 +104,12 @@ def unpickle(file):
         res = pickle.load(fo, encoding='bytes')
     return res
 
-meta = unpickle('D:\MNIST\cifar-100-python\meta')
+meta = unpickle('./data/cifar-100-python/meta')
 
 fine_label_names = [t.decode('utf8') for t in meta[b'fine_label_names']]
 
 ## cifar 100 selected train data
-train = unpickle('D:/MNIST/cifar-100-python/train')
+train = unpickle('./data/cifar-100-python/train')
 filenames = [t.decode('utf8') for t in train[b'filenames']]
 fine_labels = train[b'fine_labels']
 data = train[b'data']
@@ -147,7 +147,7 @@ for i in range(np.shape(train_cifar100_data)[0]):
 ## train_cifar100_data + train_cifar100_label
 
 ## cifar 100 selected test data
-test = unpickle('D:/MNIST/cifar-100-python/test')
+test = unpickle('./data/cifar-100-python/test')
 filenames = [t.decode('utf8') for t in test[b'filenames']]
 fine_labels = test[b'fine_labels']
 data = test[b'data']

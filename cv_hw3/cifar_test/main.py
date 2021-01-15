@@ -2,62 +2,158 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision import transforms
-from lenet import lenet5
+import torch.optim as optim
 from torch import nn
+import os
+from Cifar import *
+import argparse
+from models.lenet import lenet5
+from models.mobilenetv2 import *
+from models.resnet import *
 
-cifar_train = datasets.CIFAR10('./data',True,transform=transforms.Compose((  #true表示加载的是训练集
-                                transforms.Resize(32,32),
-                                transforms.ToTensor())))
 
-cifar_train_batch = DataLoader(cifar_train,batch_size = 30,shuffle = True)
-
-cifar_test = datasets.CIFAR10('./data',False,transform=transforms.Compose((  #false表示加载的是测试集
-                                transforms.Resize(32,32),
-                                transforms.ToTensor())))
-
-cifar_test_batch = DataLoader(cifar_test,batch_size = 30,shuffle = True)
+parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
+parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--resume', '-r', action='store_true',
+                    help='resume from checkpoint')
+parser.add_argument('--test', '-t', action='store_true',
+                    help='test with checkpoint')
+args = parser.parse_args()
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-net = lenet5()
-net = net.to(device) #将网络部署到GPU上
-loss_fn = nn.CrossEntropyLoss().to(device)
+best_acc = 0  # best test accuracy
+start_epoch = 0  # start from epoch 0 or last checkpoint epoch
+training_epoch = 230
+loading_path = './checkpoint/resnet18-ckpt.pth'
+saving_path = './checkpoint/resnet18-ckpt.pth'
+net_name = 'ResNet18'
+
+print("total training epochs in this script:", training_epoch)
+print("saving path: ", saving_path)
+
+
+# get data from Cifar.py
+print('==> Preparing data..')
+trainset = cifar_train
+trainloader = cifar_train_batch
+testset = cifar_test
+testloader = cifar_test_batch
+
+
+classes = ('plane', 'car', 'bird', 'cat', 'deer',
+           'dog', 'frog', 'horse', 'ship', 'truck')
+print("net: ", net_name)
+# Model
+print('==> Building model..')
+# net = VGG('VGG19')
+net = ResNet18(11)
+# net = PreActResNet18()
+# net = GoogLeNet()
+# net = DenseNet121()
+# net = ResNeXt29_2x64d()
+# net = MobileNet()
+# net = MobileNetV2(11)
+# net = DPN92()
+# net = ShuffleNetG2()
+# net = SENet18()
+# net = ShuffleNetV2(1)
+# net = EfficientNetB0()
+# net = RegNetX_200MF()
+# net = SimpleDLA()
+# net = lenet5()
+if device.type == 'cuda':
+    net = net.to(device) #将网络部署到GPU上
+
+if args.resume or args.test:
+    # Load checkpoint.
+    print('==> Resuming from checkpoint..')
+    print("loading path: ", loading_path)
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load(loading_path)
+    net.load_state_dict(checkpoint['net'])
+    best_acc = checkpoint['acc']
+    start_epoch = checkpoint['epoch']
+
+if device.type == 'cuda':
+    criterion = nn.CrossEntropyLoss().to(device)
+else:
+    criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(net.parameters(),lr=1e-3)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
-# 开始训练
-for epoch in range(10):
-    for batchidx, (x, label) in enumerate(cifar_train_batch):
-        x, label = x.to(device), label.to(device)  # x.size (bcs,3,32,32) label.size (bcs)
-        logits = net.forward(x)
-        loss = loss_fn(logits, label)  # logits.size:bcs*10,label.size:bcs
 
-        # 开始反向传播：
+
+# Training
+def train(epoch):
+    print('\nEpoch: %d' % epoch)
+    net.train()
+    train_loss = 0
+    correct = 0
+    total = 0
+    for batch_idx, (inputs, targets) in enumerate(trainloader):
+        if device.type == 'cuda':
+            inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
-        loss.backward()  # 计算gradient
-        optimizer.step()  # 更新参数
-        if (batchidx + 1) % 400 == 0:
-            print('这是本次迭代的第{}个batch'.format(batchidx + 1))  # 本例中一共有50000张照片，每个batch有30张照片，所以一个epoch有1667个batch
+        outputs = net(inputs)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
 
-    print('这是第{}迭代，loss是{}'.format(epoch + 1, loss.item()))
+        train_loss += loss.item()
+        _, predicted = outputs.max(1)
+        total += targets.size(0)
+        correct += predicted.eq(targets).sum().item()
+
+        # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+        #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+    # print('Loss:',train_loss/(batch_idx+1),' Acc: ', 100.*correct/total, correct, '/', total)
+    print('Loss: %f, Acc: %f%% = %d / %d' %(train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
 
 
-# 测试
-net.eval()
-with torch.no_grad():
-    correct_num = 0  # 预测正确的个数
-    total_num = 0  # 测试集中总的照片张数
-    batch_num = 0  # 第几个batch
-    for batchidx, (x, label) in enumerate(cifar_test_batch):  # x的size是30*3*32*32（30是batch_size,3是通道数），label的size是30.
-        # cifar_test中一共有10000张照片，所以一共有334个batch，因此要循环334次
-        x, label = x.to(device), label.to(device)
-        logits = net.forward(x)
-        pred = logits.argmax(dim=1)
-        correct_num += torch.eq(pred, label).float().sum().item()
-        total_num += x.size(0)
-        batch_num += 1
-        if batch_num % 50 == 0:
-            print('这是第{}个batch'.format(batch_num))  # 一共有10000/30≈334个batch
+def test(epoch):
+    global best_acc
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            if device.type == 'cuda':
+                inputs, targets = inputs.to(device), targets.to(device)
+            outputs = net(inputs)
+            loss = criterion(outputs, targets)
 
-    acc = correct_num / total_num  # 最终的total_num是10000
-    print('测试集上的准确率为：', acc)
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+        # print('Loss:', test_loss / (batch_idx + 1), ' Acc: ', 100. * correct / total, correct, '/', total)
+        print('Loss: %f, Acc: %f%% = %d / %d' % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+            # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+
+    # Save checkpoint.
+    acc = 100.*correct/total
+    if acc > best_acc:
+        print('Saving..')
+        state = {
+            'net': net.state_dict(),
+            'acc': acc,
+            'epoch': epoch,
+        }
+        if not os.path.isdir('checkpoint'):
+            os.mkdir('checkpoint')
+        torch.save(state, saving_path)
+        best_acc = acc
+
+
+
+if not args.test:
+    for epoch in range(start_epoch, start_epoch+training_epoch):
+        train(epoch)
+        test(epoch)
+        scheduler.step()
+else:
+    test(start_epoch)
