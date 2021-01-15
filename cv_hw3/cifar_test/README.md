@@ -11,7 +11,9 @@
 `python main.py --test --net=lenet5` <br>
 `python main.py --test --net=resnet18`
 
-**You should add data directory by yourself**
+**I assume you have a directory called `./data`, which has `cifar-10-batches-py` and `cifar-100-python`.**
+**You should add data directory by yourself!**
+
 
 
 

@@ -9,6 +9,7 @@ Reference:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchsummary import summary
 
 
 class BasicBlock(nn.Module):
@@ -130,3 +131,8 @@ def test():
     print(y.size())
 
 # test()
+
+if __name__ == '__main__':
+    device = torch.device("cuda:4" if torch.cuda.is_available() else "cpu")  # PyTorch v0.4.0
+    model = ResNet18().to(device)
+    summary(model, (3,32,32))

@@ -1,4 +1,6 @@
 from torch import nn
+import torch
+from torchsummary import summary
 
 
 class lenet5(nn.Module):
@@ -34,3 +36,9 @@ class lenet5(nn.Module):
         x = x.reshape(batch_size, 16 * 5 * 5)
         logits = self.fc_unit(x)
         return logits
+
+
+if __name__ == '__main__':
+    device = torch.device("cuda:6" if torch.cuda.is_available() else "cpu")  # PyTorch v0.4.0
+    model = lenet5().to(device)
+    summary(model, (3,32,32))
