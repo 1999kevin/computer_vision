@@ -26,7 +26,8 @@ parser.add_argument('--epoch', '-e', default=10,type=int,
 args = parser.parse_args()
 
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 if not args.test:

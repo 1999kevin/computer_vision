@@ -10,7 +10,8 @@ from torch.utils.data import Dataset
 # from torch.utils.data import DataLoader
 
 
-device = torch.device('cuda:4' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
+
 
 num_epochs = 5
 num_classes = 10

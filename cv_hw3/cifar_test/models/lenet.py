@@ -39,6 +39,6 @@ class lenet5(nn.Module):
 
 
 if __name__ == '__main__':
-    device = torch.device("cuda:6" if torch.cuda.is_available() else "cpu")  # PyTorch v0.4.0
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # PyTorch v0.4.0
     model = lenet5().to(device)
     summary(model, (3,32,32))
